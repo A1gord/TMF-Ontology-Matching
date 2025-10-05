@@ -1,0 +1,56 @@
+matching:
+  similarity_threshold: 0.6
+  confidence_threshold: 0.5
+  max_matches_per_entity: 5
+  enable_parallel_processing: true
+  max_workers: 4
+  enable_context_matching: true
+  context_depth: 2
+  filter_by_entity_type: true
+  enable_bidirectional_matching: false
+  comparison_strategies:
+    - strategy_type: "ExactMatchStrategy"
+      weight: 1.0
+      parameters:
+        case_sensitive: false
+    - strategy_type: "SynonymMatchStrategy"
+      weight: 0.9
+      parameters:
+        synonym_threshold: 0.8
+    - strategy_type: "StructuralSimilarityStrategy"
+      weight: 0.7
+      parameters: {}
+    - strategy_type: "SemanticSimilarityStrategy"
+      weight: 0.8
+      parameters: {}
+
+alignment:
+  equivalence_threshold: 0.9
+  subsumption_threshold: 0.7
+  overlap_threshold: 0.5
+  enable_hierarchical_analysis: true
+  max_hierarchical_depth: 5
+  consider_sibling_relationships: true
+  enable_structural_propagation: true
+  confidence_decay_factor: 0.1
+
+parsing:
+  default_namespace: "http://www.tmforum.org/ontology#"
+  enable_validation: true
+  strict_parsing: false
+  auto_generate_ids: true
+  preserve_original_structure: true
+
+serialization:
+  default_format: "json"
+  pretty_print: true
+  include_metadata: true
+  include_timestamps: true
+  compression_enabled: false
+
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file_path: null
+  max_file_size: 10485760
+  backup_count: 5
