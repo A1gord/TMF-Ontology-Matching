@@ -58,6 +58,18 @@ class SerializationConfig:
 
 
 @dataclass
+class Neo4jConfig:
+    uri: str = "bolt://localhost:7687"
+    username: str = "neo4j"
+    password: str = "password"
+    database: str = "neo4j"
+    max_connection_lifetime: int = 3600
+    max_connection_pool_size: int = 50
+    connection_acquisition_timeout: int = 60
+    enabled: bool = False
+
+
+@dataclass
 class LoggingConfig:
     level: str = "INFO"
     format: str = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
@@ -72,6 +84,7 @@ class TMFConfig:
     alignment: AlignmentConfig = field(default_factory=AlignmentConfig)
     parsing: ParsingConfig = field(default_factory=ParsingConfig)
     serialization: SerializationConfig = field(default_factory=SerializationConfig)
+    neo4j: Neo4jConfig = field(default_factory=Neo4jConfig)
     logging: LoggingConfig = field(default_factory=LoggingConfig)
     
     def to_dict(self) -> Dict[str, Any]:
@@ -96,6 +109,10 @@ class TMFConfig:
         if 'serialization' in data:
             serialization_data = data['serialization']
             config.serialization = SerializationConfig(**serialization_data)
+        
+        if 'neo4j' in data:
+            neo4j_data = data['neo4j']
+            config.neo4j = Neo4jConfig(**neo4j_data)
         
         if 'logging' in data:
             logging_data = data['logging']
