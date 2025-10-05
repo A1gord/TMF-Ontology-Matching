@@ -8,14 +8,22 @@ from ..entities.tmf_entity import TMFOntology, TMFEntity
 
 
 class JSONSerializer:
-    def __init__(self):
+    def __init__(self, config=None):
         self.logger = logging.getLogger(__name__)
+        self.config = config
     
     def serialize_ontology(self, ontology: TMFOntology, file_path: str) -> None:
         try:
             data = ontology.to_dict()
+            indent = 2
+            ensure_ascii = False
+            
+            if self.config and hasattr(self.config, 'serialization'):
+                if not self.config.serialization.pretty_print:
+                    indent = None
+            
             with open(file_path, 'w', encoding='utf-8') as file:
-                json.dump(data, file, indent=2, ensure_ascii=False)
+                json.dump(data, file, indent=indent, ensure_ascii=ensure_ascii)
             self.logger.info(f"Ontology serialized to JSON: {file_path}")
         except Exception as e:
             self.logger.error(f"Error serializing ontology to JSON: {e}")
@@ -34,8 +42,15 @@ class JSONSerializer:
     
     def serialize_matching_results(self, results: Dict[str, Any], file_path: str) -> None:
         try:
+            indent = 2
+            ensure_ascii = False
+            
+            if self.config and hasattr(self.config, 'serialization'):
+                if not self.config.serialization.pretty_print:
+                    indent = None
+            
             with open(file_path, 'w', encoding='utf-8') as file:
-                json.dump(results, file, indent=2, ensure_ascii=False)
+                json.dump(results, file, indent=indent, ensure_ascii=ensure_ascii)
             self.logger.info(f"Matching results serialized to JSON: {file_path}")
         except Exception as e:
             self.logger.error(f"Error serializing matching results to JSON: {e}")
@@ -43,13 +58,19 @@ class JSONSerializer:
 
 
 class XMLSerializer:
-    def __init__(self):
+    def __init__(self, config=None):
         self.logger = logging.getLogger(__name__)
+        self.config = config
+        
+        default_tmf_namespace = "http://www.tmforum.org/ontology#"
+        if config and hasattr(config, 'parsing') and config.parsing.default_namespace:
+            default_tmf_namespace = config.parsing.default_namespace
+        
         self.namespace_map = {
             'rdf': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
             'rdfs': 'http://www.w3.org/2000/01/rdf-schema#',
             'owl': 'http://www.w3.org/2002/07/owl#',
-            'tmf': 'http://www.tmforum.org/ontology#'
+            'tmf': default_tmf_namespace
         }
     
     def serialize_ontology(self, ontology: TMFOntology, file_path: str) -> None:
@@ -61,7 +82,10 @@ class XMLSerializer:
                 root.append(entity_element)
             
             tree = ET.ElementTree(root)
-            ET.indent(tree, space="  ", level=0)
+            
+            if self.config and hasattr(self.config, 'serialization') and self.config.serialization.pretty_print:
+                ET.indent(tree, space="  ", level=0)
+            
             tree.write(file_path, encoding='utf-8', xml_declaration=True)
             
             self.logger.info(f"Ontology serialized to XML: {file_path}")
@@ -152,10 +176,11 @@ class XMLSerializer:
 
 
 class UniversalSerializer:
-    def __init__(self):
-        self.json_serializer = JSONSerializer()
-        self.xml_serializer = XMLSerializer()
+    def __init__(self, config=None):
+        self.json_serializer = JSONSerializer(config)
+        self.xml_serializer = XMLSerializer(config)
         self.logger = logging.getLogger(__name__)
+        self.config = config
     
     def serialize_ontology(self, ontology: TMFOntology, file_path: str) -> None:
         file_extension = Path(file_path).suffix.lower()
@@ -165,9 +190,16 @@ class UniversalSerializer:
         elif file_extension in ['.xml', '.owl', '.rdf']:
             self.xml_serializer.serialize_ontology(ontology, file_path)
         else:
-            self.logger.warning(f"Unknown format {file_extension}, defaulting to JSON")
-            json_path = str(Path(file_path).with_suffix('.json'))
-            self.json_serializer.serialize_ontology(ontology, json_path)
+            default_format = "json"
+            if self.config and hasattr(self.config, 'serialization'):
+                default_format = self.config.serialization.default_format
+            
+            if default_format == "xml":
+                xml_path = str(Path(file_path).with_suffix('.xml'))
+                self.xml_serializer.serialize_ontology(ontology, xml_path)
+            else:
+                json_path = str(Path(file_path).with_suffix('.json'))
+                self.json_serializer.serialize_ontology(ontology, json_path)
     
     def deserialize_ontology(self, file_path: str) -> TMFOntology:
         file_extension = Path(file_path).suffix.lower()

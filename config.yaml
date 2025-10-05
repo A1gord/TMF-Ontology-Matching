@@ -56,7 +56,7 @@ neo4j:
   max_connection_lifetime: 3600
   max_connection_pool_size: 50
   connection_acquisition_timeout: 60
-  enabled: false
+  enabled: true
 
 logging:
   level: "INFO"

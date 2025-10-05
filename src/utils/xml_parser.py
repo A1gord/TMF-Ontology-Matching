@@ -7,13 +7,19 @@ from ..entities.tmf_entity import TMFEntity, TMFOntology, EntityType
 
 
 class TMFXMLParser:
-    def __init__(self):
+    def __init__(self, config=None):
         self.logger = logging.getLogger(__name__)
+        self.config = config
+        
+        default_tmf_namespace = "http://www.tmforum.org/ontology#"
+        if config and hasattr(config, 'parsing') and config.parsing.default_namespace:
+            default_tmf_namespace = config.parsing.default_namespace
+        
         self.namespace_map = {
             'rdf': 'http://www.w3.org/1999/02/22-rdf-syntax-ns#',
             'rdfs': 'http://www.w3.org/2000/01/rdf-schema#',
             'owl': 'http://www.w3.org/2002/07/owl#',
-            'tmf': 'http://www.tmforum.org/ontology#'
+            'tmf': default_tmf_namespace
         }
     
     def parse_file(self, file_path: str) -> TMFOntology:
@@ -62,7 +68,10 @@ class TMFXMLParser:
                                    element.get(f'{{{self.namespace_map["rdf"]}}}ID', ''))
             
             if not entity.id:
-                return None
+                if self.config and hasattr(self.config, 'parsing') and self.config.parsing.auto_generate_ids:
+                    entity.id = f"entity_{len(element.tag)}_{hash(element.tag) % 10000}"
+                else:
+                    return None
             
             entity.entity_type = self._map_element_to_entity_type(tag_name)
             
@@ -140,8 +149,9 @@ class TMFXMLParser:
 
 
 class TMFFormatParser:
-    def __init__(self):
+    def __init__(self, config=None):
         self.logger = logging.getLogger(__name__)
+        self.config = config
     
     def parse_file(self, file_path: str) -> TMFOntology:
         try:
@@ -236,10 +246,11 @@ class TMFFormatParser:
 
 
 class UniversalTMFParser:
-    def __init__(self):
-        self.xml_parser = TMFXMLParser()
-        self.tmf_parser = TMFFormatParser()
+    def __init__(self, config=None):
+        self.xml_parser = TMFXMLParser(config)
+        self.tmf_parser = TMFFormatParser(config)
         self.logger = logging.getLogger(__name__)
+        self.config = config
     
     def parse_file(self, file_path: str) -> TMFOntology:
         file_extension = Path(file_path).suffix.lower()

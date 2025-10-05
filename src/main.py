@@ -7,7 +7,7 @@ from utils.config import ConfigManager, TMFConfig, setup_logging, EnvironmentCon
 from utils.xml_parser import UniversalTMFParser
 from utils.serialization import UniversalSerializer
 from utils.metrics import ComprehensiveEvaluator, GroundTruthMapping
-from utils.neo4j_handler import Neo4jConnector, TMFNeo4jExporter, TMFNeo4jImporter, Neo4jConfig
+from utils.neo4j_handler import Neo4jConnector, TMFNeo4jExporter, TMFNeo4jImporter
 from utils.rdf_converter import RDFConverter, Neo4jToRDFConverter
 from matching.comparison_strategies import (
     ExactMatchStrategy, SynonymMatchStrategy, StructuralSimilarityStrategy,
@@ -39,10 +39,10 @@ class TMFOntologyMatcher:
                 self.logger.error(f"  - {error}")
             sys.exit(1)
         
-        self.parser = UniversalTMFParser()
-        self.serializer = UniversalSerializer()
+        self.parser = UniversalTMFParser(self.config)
+        self.serializer = UniversalSerializer(self.config)
         self.evaluator = ComprehensiveEvaluator()
-        self.rdf_converter = RDFConverter()
+        self.rdf_converter = RDFConverter(self.config)
         
         self.neo4j_connector = None
         self.neo4j_exporter = None
