@@ -18,6 +18,3 @@ class Neo4jConnector:
             print("Query failed:", e)
             return -1
         return result
-
-
-
